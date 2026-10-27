@@ -33,6 +33,7 @@ from core.crosspost import get_eligible_crosspost_groups, chunk_groups_for_cross
 from core.power import power_manager
 from core.network import check_internet_connection
 from core.telegram import telegram_notifier
+from core.telegram_bot import TelegramRemoteDaemon
 from core.lead_scanner import (
     LeadScanner, GroupLeadScanner, RadarController,
     DEFAULT_WHITELIST, DEFAULT_BLACKLIST,
@@ -259,6 +260,15 @@ async def run_lead_radar_iteration(
                 if inserted:
                     radar_status["new_leads"] += 1
 
+            if inserted and 'telegram_daemon' in globals() and telegram_daemon and getattr(telegram_daemon, "_loop", None) and telegram_daemon._loop.is_running():
+                try:
+                    asyncio.run_coroutine_threadsafe(
+                        telegram_daemon.send_lead_alert(lead),
+                        telegram_daemon._loop
+                    )
+                except Exception as tg_daemon_err:
+                    print(f"[RADAR] ⚠️ Lỗi gửi Telegram bot daemon lead: {tg_daemon_err}")
+
             if inserted and send_telegram and tg_enabled:
                 author_name = html.escape(str(lead.get("author_name") or "Người dùng Facebook"))
                 author_url = lead.get("author_url")
@@ -404,6 +414,7 @@ async def lifespan(app: FastAPI):
     print(f"[{get_vn_time_str('%H:%M:%S')}] {C_GREEN}{C_BOLD}[SYSTEM] FB-TOOL1 Pure Cookie Engine đã khởi động thành công.{C_RESET}")
     lead_radar_task = asyncio.create_task(lead_radar_loop())
     threading.Thread(target=open_browser_delayed, daemon=True).start()
+    telegram_daemon.start_in_background()
     yield
     if lead_radar_task and not lead_radar_task.done():
         lead_radar_task.cancel()
@@ -420,12 +431,66 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 @app.on_event("startup")
 async def on_startup():
     threading.Thread(target=open_browser_delayed, daemon=True).start()
+    telegram_daemon.start_in_background()
 
 
 # ==================== CAMPAIGN CONTROLLER & WORKER ====================
 
 campaign_controller = CampaignController()
 campaign_state = campaign_controller  # Backward compatible alias
+
+
+# ==================== TELEGRAM REMOTE DAEMON CONTROLLER ====================
+
+def get_poster_status_dict() -> Dict[str, Any]:
+    return {
+        "is_running": campaign_controller.state in [CampaignState.RUNNING, CampaignState.PAUSED],
+        "state": campaign_controller.state,
+        "current_status_msg": campaign_controller.current_status_msg,
+        "completed_tasks": campaign_controller.completed_tasks,
+        "total_tasks": campaign_controller.total_tasks,
+        "success_count": campaign_controller.success_count,
+        "failed_count": campaign_controller.failed_count
+    }
+
+
+def toggle_poster_state():
+    if campaign_controller.state == CampaignState.RUNNING:
+        campaign_controller.pause()
+        return "paused"
+    elif campaign_controller.state == CampaignState.PAUSED:
+        campaign_controller.resume()
+        return "resumed"
+    elif campaign_controller.state == CampaignState.STOPPED:
+        campaign_controller.finish()
+        return "stopped"
+    return "idle"
+
+
+def toggle_radar_state():
+    if radar_status.get("is_running"):
+        global_radar_controller.stop()
+        with radar_lock:
+            radar_status["is_running"] = False
+            radar_status["state"] = "STOPPED"
+        return "stopped"
+    else:
+        asyncio.create_task(run_lead_radar_iteration())
+        return "started"
+
+
+async def trigger_async_radar_scan():
+    await run_lead_radar_iteration()
+
+
+app_shared_state = {
+    "radar_status": lambda: radar_status,
+    "poster_status": get_poster_status_dict,
+    "trigger_radar_scan": trigger_async_radar_scan,
+    "trigger_poster_toggle": toggle_poster_state,
+    "trigger_radar_toggle": toggle_radar_state,
+}
+telegram_daemon = TelegramRemoteDaemon(app_shared_state)
 
 
 async def run_campaign_worker(
