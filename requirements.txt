@@ -4,3 +4,4 @@ curl_cffi>=0.6.2
 pillow>=10.2.0
 python-multipart>=0.0.9
 pyinstaller>=6.5.0
+tzdata>=2024.1

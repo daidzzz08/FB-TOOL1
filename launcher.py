@@ -1,5 +1,9 @@
 import os
 import sys
+import multiprocessing
+
+# Hỗ trợ PyInstaller multiprocessing trên Windows ngay đầu file
+multiprocessing.freeze_support()
 
 # Ép stdout/stderr dùng UTF-8, tránh lỗi cp1252 trên Windows console
 if hasattr(sys.stdout, "reconfigure"):
@@ -7,10 +11,20 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
-import uvicorn
-import threading
-import signal
-from main import app
+import traceback
+
+try:
+    import uvicorn
+    from main import app
+except Exception as e:
+    print("\n❌ [CRITICAL ERROR] Lỗi nạp module ứng dụng:")
+    traceback.print_exc()
+    print("\n" + "=" * 66)
+    try:
+        input("👉 Nhấn phím Enter để đóng cửa sổ này...")
+    except Exception:
+        pass
+    sys.exit(1)
 
 
 def print_banner():
@@ -27,8 +41,8 @@ def print_banner():
 
 
 def main():
-    print_banner()
     try:
+        print_banner()
         # Chạy Uvicorn với chế độ log gọn gàng
         config = uvicorn.Config(
             app=app,
@@ -42,9 +56,16 @@ def main():
     except (KeyboardInterrupt, SystemExit):
         print("\n[SYSTEM] 🛑 Đang tắt tool an toàn và giải phóng bộ nhớ...")
         sys.exit(0)
+    except Exception as e:
+        print("\n❌ [CRITICAL ERROR] Đã xảy ra lỗi nghiêm trọng khi chạy ứng dụng:")
+        traceback.print_exc()
+        print("\n" + "=" * 66)
+        try:
+            input("👉 Nhấn phím Enter để đóng cửa sổ này...")
+        except Exception:
+            pass
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    import multiprocessing
-    multiprocessing.freeze_support()
     main()
