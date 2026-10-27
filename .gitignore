@@ -1,0 +1,23 @@
+# Môi trường ảo & Cache
+venv/
+__pycache__/
+*.pyc
+
+# Cơ sở dữ liệu cá nhân & Ảnh riêng tư
+*.db
+data/*.db
+uploads/*
+!uploads/.gitkeep
+!data/.gitkeep
+
+# PyInstaller build artifacts cục bộ
+build/
+dist/
+*.spec
+
+# File tạm
+raw_feed_response.json
+feed_sample.json
+found_target_page.txt
+debug_group_resp.txt
+.DS_Store
