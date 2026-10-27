@@ -1,62 +1,71 @@
 @echo off
 chcp 65001 >nul
-title [CAI DAT] FB Auto Poster & Lead Radar Pro
-color 0A
+title "Cài Đặt FB Auto Poster - Lead Radar"
+color 0B
 
-echo ==================================================================
-echo   🚀 DANG KHOI TAO MOI TRUONG PYTHON CHO FB AUTO POSTER
-echo ==================================================================
+echo ====================================================================
+echo    [*] BAT DAU CAI DAT MOI TRUONG CHO TOOL FB AUTO POSTER
+echo ====================================================================
 echo.
 
-:: 1. Kiem tra Python tren may
+:: 1. Kiem tra Python (Thu ca 'python' va 'py')
+set "PY_CMD="
 python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [LOI] Khong tim thay Python tren may cua ban!
-    echo.
-    echo Huong dan:
-    echo 1. Tai Python 3.10 tro len tai: https://www.python.org/downloads/
-    echo 2. Khi cai dat, NHO TICH VAO O: [x] "Add python.exe to PATH"
-    echo.
-    pause
-    exit /b 1
-)
-
-for /f "tokens=*" %%v in ('python --version 2^>^&1') do set PY_VER=%%v
-echo [*] Tim thay: %PY_VER%
-echo.
-
-:: 2. Tao virtualenv neu chua co
-if not exist "venv\Scripts\python.exe" (
-    echo [*] Dang khoi tao moi truong ao venv...
-    python -m venv venv
-    if %errorlevel% neq 0 (
-        echo [LOI] Khong the tao moi truong ao venv.
-        pause
-        exit /b 1
-    )
-    echo [*] Da tao venv thanh cong!
+if %errorlevel% equ 0 (
+    set "PY_CMD=python"
 ) else (
-    echo [*] Moi truong ao venv da ton tai san.
+    py --version >nul 2>&1
+    if %errorlevel% equ 0 (
+        set "PY_CMD=py"
+    )
 )
-echo.
 
-:: 3. Nang cap pip va cai dat thu vien
-echo [*] Dang cap nhat pip va cai dat cac thu vien can thiet...
-venv\Scripts\python.exe -m pip install --upgrade pip >nul 2>&1
-venv\Scripts\python.exe -m pip install -r requirements.txt
+if "%PY_CMD%"=="" (
+    color 0C
+    echo [LOI] Khong tim thay Python tren may tinh cua ban!
+    echo.
+    echo Huong dan khac phuc:
+    echo 1. Tai Python 3.10 tro len tai: https://www.python.org/downloads/
+    echo 2. Khi cai dat, BAT BUOC TICH CHON: [x] "Add python.exe to PATH"
+    echo 3. Neu vua cai xong, hay DONG cua so nay va MO LAI de nhan dien PATH.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo [1/3] Da tim thay trinh khoi chay Python: %PY_CMD%
+%PY_CMD% --version
+
+:: 2. Khoi tao moi truong ao venv
+echo.
+echo [2/3] Dang khoi tao moi truong ao (venv)...
+if not exist "venv\Scripts\activate.bat" (
+    %PY_CMD% -m venv venv
+    echo Da tao thanh cong thu muc venv.
+) else (
+    echo Moi truong venv da ton tai.
+)
+
+:: 3. Cai dat thu vien
+echo.
+echo [3/3] Dang cai dat cac thu vien can thiet tu requirements.txt...
+call venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+pip install -r requirements.txt
 
 if %errorlevel% neq 0 (
+    color 0C
     echo.
-    echo [LOI] Co loi xay ra trong qua trinh cai dat thu vien!
+    echo [LOI] Cai dat thu vien that bai! Vui long kiem tra lai ket noi Internet.
     pause
     exit /b 1
 )
 
 echo.
-echo ==================================================================
-echo   ✅ CAI DAT HOAN TAT 100%!
-echo ==================================================================
-echo   Gio day ban chi can chay file [run_tool.bat] de bat dau su dung!
-echo ==================================================================
+color 0A
+echo ====================================================================
+echo    [OK] CAI DAT HOAN TAT THANH CONG!
+echo    Bay gio ban chi can click dup vao file "run_tool.bat" de su dung.
+echo ====================================================================
 echo.
 pause

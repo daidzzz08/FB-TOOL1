@@ -1,29 +1,31 @@
 @echo off
 chcp 65001 >nul
-title FB Auto Poster & Lead Radar - Pure Cookie Engine
-color 0B
+title "FB Auto Poster - Lead Radar"
+color 0A
 
-:: Kiem tra neu chua chay setup_windows.bat
-if not exist "venv\Scripts\python.exe" (
-    echo ==================================================================
-    echo   ❌ CHUA KHOI TAO MOI TRUONG CHO TOOL!
-    echo ==================================================================
-    echo   Ban chua cai dat cac thu vien can thiet.
-    echo   👉 Vui long click dup chuot vao file [setup_windows.bat] truoc nhe!
-    echo ==================================================================
+if not exist "venv\Scripts\activate.bat" (
+    color 0C
+    echo [LOI] Chua tim thay moi truong ao venv!
+    echo Vui long chay file "setup_windows.bat" truoc de cai dat tool.
     echo.
     pause
     exit /b 1
 )
 
-:: Khoi chay tool thong qua moi truong ao
-venv\Scripts\python.exe launcher.py
+echo ====================================================================
+echo    [*] DANG KHOI DONG FB AUTO POSTER VA LEAD RADAR...
+echo    * Web UI:        http://127.0.0.1:8000
+echo    * Trinh duyet:   Se tu dong mo tab web sau 2 giay...
+echo    * Tat tool:      Dong cua so nay hoac bam [Ctrl + C]
+echo ====================================================================
+echo.
 
-:: Neu launcher gap su co dung dot ngot
+call venv\Scripts\activate.bat
+python launcher.py
+
 if %errorlevel% neq 0 (
+    color 0C
     echo.
-    echo ==================================================================
-    echo   ⚠️ Chuong trinh da ket thuc voi ma loi: %errorlevel%
-    echo ==================================================================
+    echo [CANH BAO] Tool da dung lai do co loi phat sinh o tren.
     pause
 )
