@@ -1,5 +1,12 @@
 import os
 import sys
+
+# Ép stdout/stderr dùng UTF-8, tránh lỗi cp1252 trên Windows console
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 import uvicorn
 import threading
 import signal

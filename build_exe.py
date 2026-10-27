@@ -1,11 +1,18 @@
 import sys
 import os
 import subprocess
-from pathlib import Path
+
+# Ép stdout/stderr dùng UTF-8, tránh lỗi cp1252 trên Windows console
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
 def build():
-    print("[BUILD] 🚀 Bắt đầu quá trình tạo file .exe...")
+    print("[BUILD] [*] Bat dau qua trinh dong goi file .exe...")
+    
+    # Cài đặt PyInstaller
     subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
 
     sep = ";" if sys.platform.startswith("win") else ":"
@@ -13,10 +20,10 @@ def build():
     cmd = [
         sys.executable, "-m", "PyInstaller",
         "--noconfirm",
-        "--onedir",                          # Dạng thư mục giúp khởi động nhanh tức thì
+        "--onedir",
         "--name=FB_Auto_Poster",
-        "--collect-all=curl_cffi",           # Gom DLLs và certs của curl-impersonate
-        f"--add-data=static{sep}static",     # Đóng gói giao diện HTML/CSS/JS
+        "--collect-all=curl_cffi",
+        f"--add-data=static{sep}static",
         "--hidden-import=uvicorn.logging",
         "--hidden-import=uvicorn.loops",
         "--hidden-import=uvicorn.loops.auto",
@@ -28,16 +35,9 @@ def build():
         "launcher.py"
     ]
 
-    print(f"[BUILD] ⚙️ Lệnh thực thi: {' '.join(cmd)}")
+    print(f"[BUILD] [RUN] Lenh: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-
-    dist_dir = Path("dist") / "FB_Auto_Poster"
-    if dist_dir.exists():
-        (dist_dir / "data").mkdir(exist_ok=True)
-        (dist_dir / "uploads").mkdir(exist_ok=True)
-        print(f"[BUILD] ✔️ Đã tạo thư mục data và uploads tại: {dist_dir}")
-
-    print("\n[BUILD] ✅ Hoàn tất! File thực thi nằm trong thư mục: dist/FB_Auto_Poster")
+    print("\n[BUILD] [OK] Dong goi thanh cong! Thu muc output: dist/FB_Auto_Poster")
 
 
 if __name__ == "__main__":

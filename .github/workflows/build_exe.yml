@@ -1,11 +1,16 @@
 name: Build Windows EXE
 
 on:
-  workflow_dispatch: # Cho phép bấm nút chạy thủ công trên GitHub
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: "utf-8"
 
     steps:
       - name: Check out repository
@@ -26,12 +31,12 @@ jobs:
         run: |
           python build_exe.py
 
-      - name: Create Data & Uploads folders in dist
+      - name: Create Data and Uploads folders in dist
         run: |
-          if not exist dist\FB_Auto_Poster\data mkdir dist\FB_Auto_Poster\data
-          if not exist dist\FB_Auto_Poster\uploads mkdir dist\FB_Auto_Poster\uploads
+          if (!(Test-Path -Path "dist\FB_Auto_Poster\data")) { New-Item -ItemType Directory -Path "dist\FB_Auto_Poster\data" }
+          if (!(Test-Path -Path "dist\FB_Auto_Poster\uploads")) { New-Item -ItemType Directory -Path "dist\FB_Auto_Poster\uploads" }
 
-      - name: Upload Artifact (ZIP chứa file EXE)
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: FB_Auto_Poster_Windows
